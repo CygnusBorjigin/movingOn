@@ -6,10 +6,19 @@ import (
 )
 
 func NumericString(target string) bool {
-	for _, value := range strings.Split(target, "") {
-		numbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-		if !StringSliceContainsString(numbers, value) {
-			return false
+	if target[0] == '-' {
+		for _, value := range strings.Split(target[1:], "") {
+			numbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+			if !StringSliceContainsString(numbers, value) {
+				return false
+			}
+		}
+	} else {
+		for _, value := range strings.Split(target, "") {
+			numbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+			if !StringSliceContainsString(numbers, value) {
+				return false
+			}
 		}
 	}
 	return true
@@ -43,7 +52,37 @@ func StringToInt(target string) (int64, *string) {
 	}
 }
 
-func NumericInequality(target string, isNumericComparison bool, isGreaterThan bool, isEqualTo bool, isInequality bool, numericValue int64) (bool, bool, bool, bool, int64) {
+func NumericInequality(target string) (NumericRelation, int64) {
+	isNumericComparison, isGreaterThan, isEqualTo, isInequality, numericValue := numericInequalityRec(target, false, false, false, false, -1)
+	if !isNumericComparison {
+		return NotNumericComparison, -1
+	}
+	if isGreaterThan && isEqualTo && isInequality {
+		return GreaterThanOrEqualTo, numericValue
+	}
+	if !isGreaterThan && isEqualTo && isInequality {
+		return LesserThanOrEqualTo, numericValue
+	}
+	if isGreaterThan && !isEqualTo && isInequality {
+		return GreaterThan, numericValue
+	}
+	if isGreaterThan && isEqualTo && !isInequality {
+		return UndefinedComparison, -1
+	}
+	if !isGreaterThan && !isEqualTo && isInequality {
+		return LesserThan, numericValue
+	}
+	if !isGreaterThan && isEqualTo && !isInequality {
+		return EqualTo, numericValue
+	}
+	if isGreaterThan && !isEqualTo && !isInequality {
+		return UndefinedComparison, -1
+	}
+	return UndefinedComparison, -1
+
+}
+
+func numericInequalityRec(target string, isNumericComparison bool, isGreaterThan bool, isEqualTo bool, isInequality bool, numericValue int64) (bool, bool, bool, bool, int64) {
 	// Meaning of the return value
 	//  1. Whether the string represents a numerical comparison
 	//  2. Whether the inequality is a greater than relationship
@@ -55,12 +94,12 @@ func NumericInequality(target string, isNumericComparison bool, isGreaterThan bo
 	}
 	switch target[0] {
 	case '>':
-		return NumericInequality(target[1:], true, true, isEqualTo, true, -1)
+		return numericInequalityRec(target[1:], true, true, isEqualTo, true, numericValue)
 	case '<':
-		return NumericInequality(target[1:], true, false, isEqualTo, true, -1)
+		return numericInequalityRec(target[1:], true, false, isEqualTo, true, numericValue)
 	case '=':
-		return NumericInequality(target[1:], true, isGreaterThan, true, isInequality, -1)
+		return numericInequalityRec(target[1:], true, isGreaterThan, true, isInequality, numericValue)
 	default:
-		return false, false, false, false, -1
+		return false, false, false, false, numericValue
 	}
 }
