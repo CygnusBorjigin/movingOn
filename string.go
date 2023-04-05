@@ -43,45 +43,24 @@ func StringToInt(target string) (int64, *string) {
 	}
 }
 
-func NumericInequality(target string) (bool, bool, bool, int64) {
+func NumericInequality(target string, isNumericComparison bool, isGreaterThan bool, isEqualTo bool, isInequality bool, numericValue int64) (bool, bool, bool, bool, int64) {
 	// Meaning of the return value
-	//  1. Whether the string represents a numerical inequality
+	//  1. Whether the string represents a numerical comparison
 	//  2. Whether the inequality is a greater than relationship
 	//  3. Whether the inequality is an equal to relationship
-
-	firstChar := target[0]
-	restChar1 := target[1:len(target)]
-	if len(target) > 2 {
-		secondChar := target[1]
-		restChar2 := target[2:len(target)]
-		if NumericString(restChar2) {
-			parsedNumber, parseSuccess := StringToInt(restChar2)
-			if parseSuccess != nil {
-				return false, false, false, -1
-			}
-			if firstChar == '>' && secondChar == '=' {
-				return true, true, true, parsedNumber
-			} else if firstChar == '<' && secondChar == '=' {
-				return true, false, true, parsedNumber
-			} else if firstChar == '>' && secondChar != '=' {
-				return true, true, false, parsedNumber
-			} else if firstChar == '<' && secondChar != '=' {
-				return true, false, false, parsedNumber
-			}
-		}
-	} else {
-		if NumericString(restChar1) {
-			parsedNumber, parseError := StringToInt(restChar1)
-			if parseError != nil {
-				return false, false, false, -1
-			}
-			if firstChar == '>' {
-				return true, true, false, parsedNumber
-			} else if firstChar == '<' {
-				return true, false, false, parsedNumber
-			}
-		}
+	//  4. Whether the comparison is a inequality comparison
+	if NumericString(target) {
+		parsedValue, _ := StringToInt(target)
+		return isNumericComparison, isGreaterThan, isEqualTo, isInequality, parsedValue
 	}
-
-	return false, false, false, -1
+	switch target[0] {
+	case '>':
+		return NumericInequality(target[1:], true, true, isEqualTo, true, -1)
+	case '<':
+		return NumericInequality(target[1:], true, false, isEqualTo, true, -1)
+	case '=':
+		return NumericInequality(target[1:], true, isGreaterThan, true, isInequality, -1)
+	default:
+		return false, false, false, false, -1
+	}
 }
